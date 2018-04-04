@@ -30,20 +30,20 @@ public class BIRPServer{
 
 	private byte[] httpImageRequest(String s){
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    	try{
-    		URL url = new URL(s);
-       		byte[] chunk = new byte[100000];
-        	int bytesRead;
-        	InputStream stream = url.openStream();
+		try{
+		    URL url = new URL(s);
+		    byte[] chunk = new byte[100000];
+		    int bytesRead;
+		    InputStream stream = url.openStream();
 
-        	while ((bytesRead = stream.read(chunk)) > 0) {
-            	outputStream.write(chunk, 0, bytesRead);
-        	}
+		    while ((bytesRead = stream.read(chunk)) > 0) {
+			outputStream.write(chunk, 0, bytesRead);
+		    }
 
-    	}catch(IOException e) {
-        	e.printStackTrace();
-    	}
-    	return outputStream.toByteArray();
+		}catch(IOException e) {
+		    e.printStackTrace();
+		}
+		return outputStream.toByteArray();
 	}
 
 	private void sendImageToClient(byte[] imageBytes){
