@@ -31,11 +31,22 @@ public class BIRPSocket{
 		}
 	}
 
-	public void receive(BIRPPacket packet){
+	public boolean receive(BIRPPacket packet){
 		try{
 			socket.receive(packet.getPacket());
 			packet.processPacket();
+		}catch(SocketTimeoutException e){
+			return false;
 		}catch(IOException e){
+			e.printStackTrace();
+		}
+		return true;
+	}
+	
+	public void setTimeout(int time){
+		try{
+			socket.setSoTimeout(time);
+		}catch(SocketException e){
 			e.printStackTrace();
 		}
 	}

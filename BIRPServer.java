@@ -1,7 +1,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.Arrays;
-import java.net.*;
+import java.util.Random;
 
 public class BIRPServer{
 
@@ -10,12 +10,19 @@ public class BIRPServer{
 	private String clientAddress;
 	private int clientPort;
 
-	public BIRPServer(int port){
+	private Random r;
+
+	private boolean dropPackets;
+
+	public BIRPServer(int port, boolean dropPackets){
 		serverSocket = new BIRPSocket(port);
+		this.dropPackets = dropPackets;
+		r = new Random();
 	}
 
 	public void serve(){
 		String url = receiveImageRequest();
+		System.out.println(url);
 		byte[] imageBytes = httpImageRequest(url);
 		sendImageToClient(imageBytes);
 	}
@@ -37,7 +44,7 @@ public class BIRPServer{
 		    InputStream stream = url.openStream();
 
 		    while ((bytesRead = stream.read(chunk)) > 0) {
-			outputStream.write(chunk, 0, bytesRead);
+				outputStream.write(chunk, 0, bytesRead);
 		    }
 
 		}catch(IOException e) {
@@ -51,7 +58,14 @@ public class BIRPServer{
 		int lastBlockSize = imageBytes.length % 512;
 		int fullBlocks = (imageBytes.length - lastBlockSize) / 512;
 		int blockCount = 0;
+
+		BIRPPacket lastAck = new BIRPPacket(BIRPPacket.ACK, 0, clientAddress, clientPort); //dummy initialization, will become real ack inside while loop
 		
+		int[] packetsToDrop = new int[0];
+		if(dropPackets){
+			packetsToDrop = packetsToDrop(fullBlocks + 1);
+		}
+
 		while(blockCount < fullBlocks){
 			
 			byte[] block = new byte[512];
@@ -60,10 +74,32 @@ public class BIRPServer{
 			}
 
 			BIRPPacket packet = new BIRPPacket(BIRPPacket.DATA, blockCount + 1, block, clientAddress, clientPort);
-			serverSocket.send(packet);
+
+			if(dropPackets && packetsToDrop.length != 0){
+				boolean dropThisPacket = false;
+				for(int i = 0; i < packetsToDrop.length; i++){
+					if(blockCount == packetsToDrop[i]){
+						dropThisPacket = true;
+					}
+				}
+				if(!dropThisPacket){
+					serverSocket.send(packet);
+				}
+			}else{
+				serverSocket.send(packet);
+			}
 
 			BIRPPacket ack = new BIRPPacket();
 			serverSocket.receive(ack);
+
+			while(ack.getSequenceNumber() == lastAck.getSequenceNumber()){
+				serverSocket.send(packet);
+				serverSocket.receive(ack);
+			}
+
+			lastAck = ack;
+
+			System.out.println("Received ACK: " + ack.getSequenceNumber());
 
 			blockCount++;
 
@@ -80,6 +116,19 @@ public class BIRPServer{
 		BIRPPacket ack = new BIRPPacket();
 		serverSocket.receive(ack);
 
+		System.out.println("Received ACK: " + ack.getSequenceNumber());
+
+	}
+
+	private int[] packetsToDrop(int blockCount){
+		int packetDropCount = blockCount / 8;
+		int[] packetNumbers = new int[packetDropCount];
+		if(packetDropCount != 0){
+			for(int i = 0; i < packetDropCount; i++){
+				packetNumbers[i] = r.nextInt(blockCount - 3) + 3;
+			}
+		}
+		return packetNumbers;
 	}
 
 }

@@ -1,3 +1,6 @@
+import java.net.*;
+import java.io.*;
+
 public class BIRPClient{
 
 	private String serverAddress;
@@ -11,6 +14,7 @@ public class BIRPClient{
 		this.serverAddress = serverAddress;
 		this.serverPort = serverPort;
 		socket = new BIRPSocket();
+		socket.setTimeout(2000);
 		imageBytes = new byte[0];
 	}
 
@@ -20,11 +24,17 @@ public class BIRPClient{
 	}
 
 	public void receiveImage(){
+		
 		int blockLength = 512;
+		BIRPPacket ack = new BIRPPacket(BIRPPacket.ACK, 1, serverAddress, serverPort);
 
 		while(blockLength == 512){
+	
 			BIRPPacket packet = new BIRPPacket();
-			socket.receive(packet);
+
+			while(!socket.receive(packet)){
+				socket.send(ack);
+			}
 
 			byte[] block = packet.getData();
 			blockLength = block.length;
@@ -38,8 +48,9 @@ public class BIRPClient{
 			}
 			imageBytes = temp;
 
-			BIRPPacket ack = new BIRPPacket(BIRPPacket.ACK, packet.getSequenceNumber(), serverAddress, serverPort);
+			ack = new BIRPPacket(BIRPPacket.ACK, packet.getSequenceNumber(), serverAddress, serverPort);
 			socket.send(ack);
+			
 		}
 	}
 
