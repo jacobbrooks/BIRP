@@ -15,7 +15,7 @@ public class ClientMain{
 		String slidingWindow = args[0];
 		BIRPClient client = new BIRPClient("altair.cs.oswego.edu", 6145);
 		
-		client.sendImageRequest("https://www.hdwallpapers.in/walls/xenoblade_chronicles_x_4k-HD.jpg");
+		client.sendImageRequest("https://pnimg.net/lrep/11/61/sb3406a0b92.jpg");
 
 		long startTime = System.nanoTime();
 		if(slidingWindow.equals("true")){

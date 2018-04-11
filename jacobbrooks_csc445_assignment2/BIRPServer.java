@@ -106,7 +106,7 @@ public class BIRPServer{
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		try{
 		    URL url = new URL(s);
-		    byte[] chunk = new byte[5000000];
+		    byte[] chunk = new byte[100000];
 		    int bytesRead;
 		    InputStream stream = url.openStream();
 
@@ -249,7 +249,7 @@ public class BIRPServer{
 	}
 
 	private int[] packetsToDrop(int blockCount){
-		int packetDropCount = blockCount / 100;
+		int packetDropCount = blockCount / 8;
 		int[] packetNumbers = new int[packetDropCount];
 		if(packetDropCount != 0){
 			for(int i = 0; i < packetDropCount; i++){
